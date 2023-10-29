@@ -7,6 +7,9 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.menu import MDDropdownMenu
 import requests
+import urllib.request
+import sys
+import os
 
 KV = '''
 #:import MDRaisedButton kivymd.uix.button.MDRaisedButton
@@ -27,7 +30,7 @@ MDScreen:
                 orientation: "vertical"
                 size_hint_y: None
                 height: self.minimum_height
-                
+
         Label:
             text: "Add subjects first"
             id: no_subject_added_label
@@ -242,7 +245,7 @@ class GradeCalculator(MDApp):
         return None
 
     def compare_versions(self, latest_version):
-        current_version = "1.0.0"  # Replace with your current version
+        current_version = "1.0.4"  # Replace with your current version
         return latest_version > current_version
 
     def show_update_dialog(self, latest_version):
@@ -257,8 +260,25 @@ class GradeCalculator(MDApp):
         update_dialog.open()
 
     def open_update_url(self):
-        update_url = "https://raw.githubusercontent.com/ArdiSalvi/gwaCalcVers/main/version.txt"
-        pass
+        update_url = "https://raw.githubusercontent.com/ArdiSalvi/gwaCalcVers/main/main.py"
+
+        try:
+            response = urllib.request.urlopen(update_url)
+            new_code = response.read().decode()
+
+            # Check if the new code is different from the current code
+            if new_code != open(sys.argv[0]).read():
+                with open(sys.argv[0], "w") as file:
+                    file.write(new_code)
+
+                print("Application updated successfully.")
+                # Restart the application
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+
+            else:
+                print("Application is already up to date.")
+        except Exception as e:
+            print("An error occurred while updating the application:", str(e))
 
     def show_no_update_dialog(self):
         no_update_dialog = MDDialog(
