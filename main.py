@@ -271,14 +271,32 @@ class GradeCalculator(MDApp):
                 with open(sys.argv[0], "w") as file:
                     file.write(new_code)
 
-                print("Application updated successfully.")
-                # Restart the application
-                os.execv(sys.executable, [sys.executable] + sys.argv)
-
+                update_dialog = MDDialog(
+                    title="Update Successful",
+                    text="The application has been updated successfully. Please restart the program.",
+                    buttons=[
+                        MDFlatButton(text="Exit App", on_release=lambda x: os.execv(sys.executable, [sys.executable] + sys.argv)),
+                    ]
+                )
+                update_dialog.open()
             else:
-                print("Application is already up to date.")
+                no_update_dialog = MDDialog(
+                    title="Up to Date",
+                    text="You already have the latest version installed.",
+                    buttons=[
+                        MDFlatButton(text="OK", on_release=lambda x: no_update_dialog.dismiss()),
+                    ]
+                )
+                no_update_dialog.open()
         except Exception as e:
-            print("An error occurred while updating the application:", str(e))
+            error_dialog = MDDialog(
+                title="Error",
+                text="An error occurred while updating the application: " + str(e),
+                buttons=[
+                    MDFlatButton(text="OK", on_release=lambda x: error_dialog.dismiss()),
+                ]
+            )
+            error_dialog.open()
 
     def show_no_update_dialog(self):
         no_update_dialog = MDDialog(
