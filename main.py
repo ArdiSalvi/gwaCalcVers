@@ -12,38 +12,42 @@ import requests
 import urllib.request
 import sys
 import os
+import ssl
+
+context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+context.check_hostname = False
 
 KV = '''
 # menu
 <ItemDrawer>:
     theme_text_color: "Custom"
     on_release: self.parent.set_color_item(self)
-    
+
     IconLeftWidget:
         id: icon
         icon: root.icon
         theme_text_color: "Custom"
         text_color: root.text_color
-        
+
 <ContentNavigationDrawer>:
     orientation: "vertical"
     padding: "8dp"
     spacing: "8dp"
-            
+
     MDLabel:
         text: "GWA Calculator"
         font_style: "Button"
         adaptive_height: True
-        
+
     MDLabel: 
-        text: "Version 1.0.48"
+        text: "Version 1.0.52"
         font_style: "Caption"
         adaptive_height: True
-        
+
     ScrollView:
         DrawerList:
             id: md_list
-    
+
 
 MDScreen:
     MDNavigationLayout:
@@ -51,12 +55,12 @@ MDScreen:
             MDScreen:
                 MDBoxLayout:
                     orientation: "vertical"
-                    
+
                     MDTopAppBar:
                         title: "GWA Calculator"
                         anchor_title: "center"
                         elevation: 0
-            
+
                     ScrollView:
                         BoxLayout:
                             id: subject_container
@@ -64,7 +68,7 @@ MDScreen:
                             size_hint_y: None
                             height: self.minimum_height
                             spacing: 10
-                            
+
                             Label:
                                 text: "GWA: -"
                                 id: overall_grade_label
@@ -75,7 +79,7 @@ MDScreen:
                                 color: 0, 0, 0, 1  # Set the text color to black (RGBA values: 0, 0, 0, 1)
                                 bold: True  # Make the text bold
                                 adaptive_height: True
-            
+
                             Label:
                                 text: "Please add subjects first"
                                 id: no_subject_added_label
@@ -86,7 +90,7 @@ MDScreen:
                                 size: self.texture_size
                                 opacity: 0 if app.subjects else 1  # Hide the label if there are subjects added
                                 adaptive_height: True
-            
+
                     MDBottomAppBar:
                         MDTopAppBar:
                             title: " "
@@ -96,22 +100,25 @@ MDScreen:
                             mode: "end"
                             elevation: 0
                             on_action_button: app.add_subject()  # Call the add_subject method when the plus button is pressed
-                            
+
                     Widget:
-        
+
         MDNavigationDrawer:
             id: nav_drawer  
-            
+
             ContentNavigationDrawer:
                 id: content_drawer
 '''
 
+
 class ContentNavigationDrawer(MDBoxLayout):
     pass
+
 
 class ItemDrawer(OneLineIconListItem):
     icon = StringProperty()
     text_color = ListProperty((0, 0, 0, 1))
+
 
 class DrawerList(ThemableBehavior, MDList):
     def set_color_item(self, instance_item):
@@ -155,7 +162,6 @@ class GradeCalculator(MDApp):
             self.root.ids.content_drawer.ids.md_list.add_widget(
                 ItemDrawer(icon=icon_name, text=icon_item[icon_name])
             )
-
 
     def calculate_grade(self, instance):
         grades = {}
@@ -324,7 +330,7 @@ class GradeCalculator(MDApp):
         return None
 
     def compare_versions(self, latest_version):
-        current_version = "1.0.48"  # Replace with your current version
+        current_version = "1.0.52"  # Replace with your current version
 
         # Split the version strings into lists of integers
         current_version_parts = list(map(int, current_version.split(".")))
@@ -352,7 +358,8 @@ class GradeCalculator(MDApp):
         update_url = "https://raw.githubusercontent.com/ArdiSalvi/gwaCalcVers/main/main.py"
 
         try:
-            response = urllib.request.urlopen(update_url)
+            context = ssl.create_default_context()  # Create SSL context
+            response = urllib.request.urlopen(update_url, context=context)  # Pass the context in urlopen
             new_code = response.read().decode()
 
             # Check if the new code is different from the current code
@@ -391,7 +398,7 @@ class GradeCalculator(MDApp):
             error_dialog.open()
 
     def show_no_update_dialog(self):
-        current_version = "1.0.48"
+        current_version = "1.0.52"
         no_update_dialog = MDDialog(
             title="GWA Calculator is up to date",
             text=f"You already have the latest version (v{current_version}) installed.",
