@@ -255,7 +255,17 @@ class GradeCalculator(MDApp):
 
     def compare_versions(self, latest_version):
         current_version = "1.0.12"  # Replace with your current version
-        return latest_version > current_version
+
+        # Split the version strings into lists of integers
+        current_version_parts = list(map(int, current_version.split(".")))
+        latest_version_parts = list(map(int, latest_version.split(".")))
+
+        # Compare each part of the version numbers
+        for c, l in zip(current_version_parts, latest_version_parts):
+            if l > c:
+                return True  # New version is available
+
+        return False  # No new version available
 
     def show_update_dialog(self, latest_version):
         update_dialog = MDDialog(
@@ -284,7 +294,10 @@ class GradeCalculator(MDApp):
                     title="Update Successful",
                     text="The application has been updated successfully. Please restart the program.",
                     buttons=[
-                        MDFlatButton(text="Exit App", on_release=lambda x: os.execv(sys.executable, [sys.executable] + sys.argv)),
+                        MDFlatButton(
+                            text="Exit App",
+                            on_release=lambda x: os.execv(sys.executable, [sys.executable] + sys.argv)
+                        ),
                     ]
                 )
                 update_dialog.open()
