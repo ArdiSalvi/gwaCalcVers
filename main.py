@@ -1,6 +1,6 @@
 from kivymd.app import MDApp
 from kivy.lang import Builder
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.button import MDRectangleFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDFlatButton
@@ -23,6 +23,7 @@ MDScreen:
             title: "GWA: -"
             right_action_items:
                 [["menu", lambda x: app.open_menu()], ["download", lambda x: app.check_for_updates()]]
+            elevation: 0
 
         ScrollView:
             BoxLayout:
@@ -30,16 +31,17 @@ MDScreen:
                 orientation: "vertical"
                 size_hint_y: None
                 height: self.minimum_height
+                spacing: 10
 
-        Label:
-            text: "Add subjects first"
-            id: no_subject_added_label
-            font_size: '24sp'
-            color: 0.7, 0.7, 0.7, 1  # Light gray color
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            size_hint: None, None
-            size: self.texture_size
-            opacity: 0 if app.subjects else 1  # Hide the label if there are subjects added
+                Label:
+                    text: "Add subjects first"
+                    id: no_subject_added_label
+                    font_size: '24sp'
+                    color: 0.7, 0.7, 0.7, 1  # Light gray color
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    size_hint: None, None
+                    size: self.texture_size
+                    opacity: 0 if app.subjects else 1  # Hide the label if there are subjects added
 
         MDBottomAppBar:
             MDTopAppBar:
@@ -48,6 +50,7 @@ MDScreen:
                 type: "bottom"
                 left_action_items: [["menu", lambda x: x]]
                 mode: "end"
+                elevation: 0
                 on_action_button: app.add_subject()  # Call the add_subject method when the plus button is pressed
 '''
 
@@ -57,9 +60,14 @@ class GradeCalculator(MDApp):
     latest_version_url = "https://raw.githubusercontent.com/ArdiSalvi/gwaCalcVers/main/version.txt"
 
     def build(self):
+        self.theme_cls.font_styles.update({
+            "H5": ["Roboto", 16, "Bold"],
+            "Subtitle2": ["Roboto", 14, "Regular"]
+        })
+        self.theme_cls.font_base = "Roboto"
         self.theme_cls.material_style = "M2"
-        self.theme_cls.primary_palette = "Orange"
-        self.dialog = None  # Declare the dialog attribute
+        self.theme_cls.primary_palette = "Blue"
+        self.dialog = None
         return Builder.load_string(KV)
 
     def calculate_grade(self, instance):
@@ -107,7 +115,7 @@ class GradeCalculator(MDApp):
 
     def add_subject(self):
         # Create the content layout for the dialog
-        content = MDBoxLayout(orientation='vertical', size_hint=(1, None), height=130)
+        content = MDBoxLayout(orientation='vertical', size_hint=(1, None), height=170)
 
         # Create text inputs for Subject Name and GWA
         subject_name_input = MDTextField(hint_text="Subject Name")
@@ -181,17 +189,18 @@ class GradeCalculator(MDApp):
             self.subjects.append({new_subject: gwa})
 
             # Create a new button for the new subject
-            new_subject_button = MDRaisedButton(
+            new_subject_button = MDRectangleFlatButton(
                 text=f"[size=16][b]{new_subject}[/b][/size]\n[size=14]GWA: {subject_gwa}[/size]",
                 size_hint=(1, None),
                 height=80,
+                md_bg_color=(0, 0, 255, 0.8),  # Lightish blue color (R, G, B, A)
+                text_color=(1, 1, 1, 1)  # White color (R, G, B, A)
             )
 
             # Adjust the button properties
-            new_subject_button.font_size = '16sp'
-            new_subject_button.md_bg_color = self.theme_cls.accent_color
+            new_subject_button.font_size = '30sp'
 
-            self.root.ids.no_subject_added_label.opacity = 0  # Set the opacity to 0 to hide the label
+            self.root.ids.no_subject_added_label.opacity = 0
 
             # Add the new subject button to the subject_container
             self.root.ids.subject_container.add_widget(new_subject_button)
@@ -245,13 +254,13 @@ class GradeCalculator(MDApp):
         return None
 
     def compare_versions(self, latest_version):
-        current_version = "1.0.4"  # Replace with your current version
+        current_version = "1.0.12"  # Replace with your current version
         return latest_version > current_version
 
     def show_update_dialog(self, latest_version):
         update_dialog = MDDialog(
             title="Update Available",
-            text=f"A new version ({latest_version}) is available. Do you want to update?",
+            text=f"A new version (v{latest_version}) is available. Do you want to update?",
             buttons=[
                 MDFlatButton(text="Cancel", on_release=lambda x: update_dialog.dismiss()),
                 MDFlatButton(text="Update", on_release=lambda x: self.open_update_url()),
@@ -299,9 +308,10 @@ class GradeCalculator(MDApp):
             error_dialog.open()
 
     def show_no_update_dialog(self):
+        current_version = "1.0.12"
         no_update_dialog = MDDialog(
             title="Up to Date",
-            text="You already have the latest version installed.",
+            text=f"You already have the latest version (v{current_version}) installed.",
             buttons=[
                 MDFlatButton(text="OK", on_release=lambda x: no_update_dialog.dismiss()),
             ]
