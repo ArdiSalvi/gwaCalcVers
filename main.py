@@ -254,7 +254,7 @@ class GradeCalculator(MDApp):
         return None
 
     def compare_versions(self, latest_version):
-        current_version = "1.0.12"  # Replace with your current version
+        current_version = "1.0.23"  # Replace with your current version
 
         # Split the version strings into lists of integers
         current_version_parts = list(map(int, current_version.split(".")))
@@ -321,7 +321,7 @@ class GradeCalculator(MDApp):
             error_dialog.open()
 
     def show_no_update_dialog(self):
-        current_version = "1.0.12"
+        current_version = "1.0.23"
         no_update_dialog = MDDialog(
             title="Up to Date",
             text=f"You already have the latest version (v{current_version}) installed.",
