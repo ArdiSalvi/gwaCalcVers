@@ -5,54 +5,128 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.textfield import MDTextField
-from kivymd.uix.menu import MDDropdownMenu
+from kivy.properties import StringProperty, ListProperty
+from kivymd.theming import ThemableBehavior
+from kivymd.uix.list import OneLineIconListItem, MDList
 import requests
 import urllib.request
 import sys
 import os
 
 KV = '''
-#:import MDRaisedButton kivymd.uix.button.MDRaisedButton
+# menu
+<ItemDrawer>:
+    theme_text_color: "Custom"
+    on_release: self.parent.set_color_item(self)
+    
+    IconLeftWidget:
+        id: icon
+        icon: root.icon
+        theme_text_color: "Custom"
+        text_color: root.text_color
+        
+<ContentNavigationDrawer>:
+    orientation: "vertical"
+    padding: "8dp"
+    spacing: "8dp"
+            
+    MDLabel:
+        text: "GWA Calculator"
+        font_style: "Button"
+        adaptive_height: True
+        
+    MDLabel: 
+        text: "Version 1.0.48"
+        font_style: "Caption"
+        adaptive_height: True
+        
+    ScrollView:
+        DrawerList:
+            id: md_list
+    
 
 MDScreen:
-    MDBoxLayout:
-        orientation: "vertical"
-
-        MDTopAppBar:
-            id: overall_grade_label
-            title: "GWA: -"
-            right_action_items:
-                [["menu", lambda x: app.open_menu()], ["download", lambda x: app.check_for_updates()]]
-            elevation: 0
-
-        ScrollView:
-            BoxLayout:
-                id: subject_container
-                orientation: "vertical"
-                size_hint_y: None
-                height: self.minimum_height
-                spacing: 10
-
-                Label:
-                    text: "Add subjects first"
-                    id: no_subject_added_label
-                    font_size: '24sp'
-                    color: 0.7, 0.7, 0.7, 1  # Light gray color
-                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    size_hint: None, None
-                    size: self.texture_size
-                    opacity: 0 if app.subjects else 1  # Hide the label if there are subjects added
-
-        MDBottomAppBar:
-            MDTopAppBar:
-                title: "GWA Calculator"
-                icon: "plus"
-                type: "bottom"
-                left_action_items: [["menu", lambda x: x]]
-                mode: "end"
-                elevation: 0
-                on_action_button: app.add_subject()  # Call the add_subject method when the plus button is pressed
+    MDNavigationLayout:
+        ScreenManager:
+            MDScreen:
+                MDBoxLayout:
+                    orientation: "vertical"
+                    
+                    MDTopAppBar:
+                        title: "GWA Calculator"
+                        anchor_title: "center"
+                        elevation: 0
+            
+                    ScrollView:
+                        BoxLayout:
+                            id: subject_container
+                            orientation: "vertical"
+                            size_hint_y: None
+                            height: self.minimum_height
+                            spacing: 10
+                            
+                            Label:
+                                text: "GWA: -"
+                                id: overall_grade_label
+                                font_size: '24sp'
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                size_hint: None, None
+                                size: self.texture_size
+                                color: 0, 0, 0, 1  # Set the text color to black (RGBA values: 0, 0, 0, 1)
+                                bold: True  # Make the text bold
+                                adaptive_height: True
+            
+                            Label:
+                                text: "Please add subjects first"
+                                id: no_subject_added_label
+                                font_size: '24sp'
+                                color: 0.7, 0.7, 0.7, 1  # Light gray color
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                size_hint: None, None
+                                size: self.texture_size
+                                opacity: 0 if app.subjects else 1  # Hide the label if there are subjects added
+                                adaptive_height: True
+            
+                    MDBottomAppBar:
+                        MDTopAppBar:
+                            title: " "
+                            icon: "plus"
+                            type: "bottom"
+                            left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+                            mode: "end"
+                            elevation: 0
+                            on_action_button: app.add_subject()  # Call the add_subject method when the plus button is pressed
+                            
+                    Widget:
+        
+        MDNavigationDrawer:
+            id: nav_drawer  
+            
+            ContentNavigationDrawer:
+                id: content_drawer
 '''
+
+class ContentNavigationDrawer(MDBoxLayout):
+    pass
+
+class ItemDrawer(OneLineIconListItem):
+    icon = StringProperty()
+    text_color = ListProperty((0, 0, 0, 1))
+
+class DrawerList(ThemableBehavior, MDList):
+    def set_color_item(self, instance_item):
+        for item in self.children:
+            if item.text_color == self.theme_cls.primary_color:
+                item.text_color = self.theme_cls.text_color
+                break
+        instance_item.text_color = self.theme_cls.primary_color
+
+        if instance_item.text == "Check for Updates":
+            self.check_for_updates_dialog()
+
+    def check_for_updates_dialog(self):
+        app = MDApp.get_running_app()
+        app.check_for_updates()
 
 
 class GradeCalculator(MDApp):
@@ -69,6 +143,19 @@ class GradeCalculator(MDApp):
         self.theme_cls.primary_palette = "Blue"
         self.dialog = None
         return Builder.load_string(KV)
+
+    def on_start(self):
+        icon_item = {
+            "folder": "My files",
+            "account-multiple": "Shared with me",
+            "star": "Starred",
+            "download": "Check for Updates"
+        }
+        for icon_name in icon_item.keys():
+            self.root.ids.content_drawer.ids.md_list.add_widget(
+                ItemDrawer(icon=icon_name, text=icon_item[icon_name])
+            )
+
 
     def calculate_grade(self, instance):
         grades = {}
@@ -115,7 +202,7 @@ class GradeCalculator(MDApp):
 
     def add_subject(self):
         # Create the content layout for the dialog
-        content = MDBoxLayout(orientation='vertical', size_hint=(1, None), height=170)
+        content = MDBoxLayout(orientation='vertical', size_hint=(1, None), height=190)
 
         # Create text inputs for Subject Name and GWA
         subject_name_input = MDTextField(hint_text="Subject Name")
@@ -188,9 +275,8 @@ class GradeCalculator(MDApp):
 
             self.subjects.append({new_subject: gwa})
 
-            # Create a new button for the new subject
             new_subject_button = MDRectangleFlatButton(
-                text=f"[size=16][b]{new_subject}[/b][/size]\n[size=14]GWA: {subject_gwa}[/size]",
+                text=f"[size=16][b]{new_subject}\nGWA: {subject_gwa}[/b][/size]",
                 size_hint=(1, None),
                 height=80,
                 md_bg_color=(0, 0, 255, 0.8),  # Lightish blue color (R, G, B, A)
@@ -218,22 +304,6 @@ class GradeCalculator(MDApp):
             )
             error_dialog.open()
 
-    def open_menu(self):
-        menu_items = [
-            {
-                "text": "Check for updates",
-                "on_release": self.check_for_updates
-            }
-        ]
-
-        self.menu = MDDropdownMenu(
-            caller=self.root.ids.overall_grade_label.ids.right_actions.children[-1],
-            items=menu_items,
-            width_mult=4,
-        )
-
-        self.menu.open()
-
     def check_for_updates(self):
         latest_version = self.get_latest_version()
         if latest_version:
@@ -254,7 +324,7 @@ class GradeCalculator(MDApp):
         return None
 
     def compare_versions(self, latest_version):
-        current_version = "1.0.23"  # Replace with your current version
+        current_version = "1.0.48"  # Replace with your current version
 
         # Split the version strings into lists of integers
         current_version_parts = list(map(int, current_version.split(".")))
@@ -272,7 +342,7 @@ class GradeCalculator(MDApp):
             title="Update Available",
             text=f"A new version (v{latest_version}) is available. Do you want to update?",
             buttons=[
-                MDFlatButton(text="Cancel", on_release=lambda x: update_dialog.dismiss()),
+                MDFlatButton(text="Later", on_release=lambda x: update_dialog.dismiss()),
                 MDFlatButton(text="Update", on_release=lambda x: self.open_update_url()),
             ]
         )
@@ -321,9 +391,9 @@ class GradeCalculator(MDApp):
             error_dialog.open()
 
     def show_no_update_dialog(self):
-        current_version = "1.0.23"
+        current_version = "1.0.48"
         no_update_dialog = MDDialog(
-            title="Up to Date",
+            title="GWA Calculator is up to date",
             text=f"You already have the latest version (v{current_version}) installed.",
             buttons=[
                 MDFlatButton(text="OK", on_release=lambda x: no_update_dialog.dismiss()),
