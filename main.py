@@ -40,7 +40,7 @@ KV = '''
         adaptive_height: True
 
     MDLabel: 
-        text: "Version 1.0.52"
+        text: "Version 1.0.68"
         font_style: "Caption"
         adaptive_height: True
 
@@ -60,6 +60,7 @@ MDScreen:
                         title: "GWA Calculator"
                         anchor_title: "center"
                         elevation: 0
+                        left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
 
                     ScrollView:
                         BoxLayout:
@@ -96,10 +97,10 @@ MDScreen:
                             title: " "
                             icon: "plus"
                             type: "bottom"
-                            left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
                             mode: "end"
                             elevation: 0
-                            on_action_button: app.add_subject()  # Call the add_subject method when the plus button is pressed
+                            on_action_button: app.add_subject()
+                            left_action_items: [["delete", lambda x: app.show_coming_soon_dialog()]]
 
                     Widget:
 
@@ -163,6 +164,16 @@ class GradeCalculator(MDApp):
                 ItemDrawer(icon=icon_name, text=icon_item[icon_name])
             )
 
+    def show_coming_soon_dialog(self):
+        coming_soon_dialog = MDDialog(
+            title="Feature Coming Soon",
+            text="This specific functionality has not been included in the application yet.\n\nPlease be patient and look out for future updates, as it may be added at a later time.",
+            buttons=[
+                MDFlatButton(text="OK", on_release=lambda x: coming_soon_dialog.dismiss()),
+            ]
+        )
+        coming_soon_dialog.open()
+
     def calculate_grade(self, instance):
         grades = {}
 
@@ -208,17 +219,15 @@ class GradeCalculator(MDApp):
 
     def add_subject(self):
         # Create the content layout for the dialog
-        content = MDBoxLayout(orientation='vertical', size_hint=(1, None), height=190)
+        content = MDBoxLayout(orientation='vertical', size_hint=(1, None), height=200)
 
         # Create text inputs for Subject Name and GWA
         subject_name_input = MDTextField(hint_text="Subject Name")
         gwa_input = MDTextField(hint_text="GWA")
 
-        # Add the text inputs to the content layout
         content.add_widget(subject_name_input)
         content.add_widget(gwa_input)
 
-        # Create buttons for the dialog
         cancel_button = MDFlatButton(
             text="CANCEL",
             theme_text_color="Custom",
@@ -232,7 +241,6 @@ class GradeCalculator(MDApp):
             on_release=lambda x: self.save_subject(self.dialog, subject_name_input.text, gwa_input.text)
         )
 
-        # Create the dialog
         self.dialog = MDDialog(
             title="Add Subject",
             type="custom",
@@ -240,7 +248,6 @@ class GradeCalculator(MDApp):
             buttons=[cancel_button, add_subject_button],
         )
 
-        # Open the dialog
         self.dialog.open()
 
     def dismiss_dialog(self, instance):
@@ -282,11 +289,12 @@ class GradeCalculator(MDApp):
             self.subjects.append({new_subject: gwa})
 
             new_subject_button = MDRectangleFlatButton(
-                text=f"[size=16][b]{new_subject}\nGWA: {subject_gwa}[/b][/size]",
-                size_hint=(1, None),
+                text=f"[size=16][b]Subject: {new_subject}\nGWA: {subject_gwa}[/b][/size]",
+                size_hint=(0.5, None),  # Set width to 50% of the available space
                 height=80,
-                md_bg_color=(0, 0, 255, 0.8),  # Lightish blue color (R, G, B, A)
-                text_color=(1, 1, 1, 1)  # White color (R, G, B, A)
+                pos_hint={'center_x': 0.5, 'center_y': 0.5},
+                md_bg_color=(0, 0, 255, 0.8),
+                text_color=(1, 1, 1, 1)
             )
 
             # Adjust the button properties
@@ -330,7 +338,7 @@ class GradeCalculator(MDApp):
         return None
 
     def compare_versions(self, latest_version):
-        current_version = "1.0.52"  # Replace with your current version
+        current_version = "1.0.68"
 
         # Split the version strings into lists of integers
         current_version_parts = list(map(int, current_version.split(".")))
@@ -398,7 +406,7 @@ class GradeCalculator(MDApp):
             error_dialog.open()
 
     def show_no_update_dialog(self):
-        current_version = "1.0.52"
+        current_version = "1.0.68"
         no_update_dialog = MDDialog(
             title="GWA Calculator is up to date",
             text=f"You already have the latest version (v{current_version}) installed.",
